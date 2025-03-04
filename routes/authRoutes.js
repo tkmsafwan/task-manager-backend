@@ -54,20 +54,19 @@ router.post("/login", async (req, res) => {
     }
 });
 
-router.post("/reset-password", authMiddleware, async (req, res) => {
-    const token = req.headers.authorization;
-    const { newPassword } = req.body;
+router.post("/change-password", authMiddleware, async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.userId);
+        const user = await User.findById(req.user.userId);
         if (!user) return res.status(404).json({ message: "User not found" });
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) return res.status(400).json({ message: "Old password is incorrect" });
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedPassword;
         await user.save();
-        res.json({ message: "Password reset successfully!" });
-
+        res.json({ message: "Password changed successfully!" });
     } catch (error) {
-        res.status(400).json({ message: "Invalid or expired token" });
+        res.status(500).json({ message: "Server error" });
     }
 });
 
