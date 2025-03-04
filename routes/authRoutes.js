@@ -19,7 +19,7 @@ router.post("/signup", async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({ name, email, password: hashedPassword });
-        
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
@@ -51,6 +51,23 @@ router.post("/login", async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: "Error logging in" });
+    }
+});
+
+router.post("/reset-password", authMiddleware, async (req, res) => {
+    const token = req.headers.authorization;
+    const { newPassword } = req.body;
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+        res.json({ message: "Password reset successfully!" });
+
+    } catch (error) {
+        res.status(400).json({ message: "Invalid or expired token" });
     }
 });
 
