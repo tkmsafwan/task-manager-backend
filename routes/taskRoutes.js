@@ -29,7 +29,7 @@ router.get("/", authMiddleware, async (req, res) => {
 
 router.get("/:id", authMiddleware, async (req, res) => {
     try {
-        const task = await Task.findById(req.params.id, req.body, { new: true });
+        const task = await Task.findById(req.params.id);
         if (!task) return res.status(404).json({ error: "Task not found" });
         res.json({ message: `Task fetched successfully`, task });
     } catch (error) {
